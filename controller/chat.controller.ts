@@ -38,3 +38,24 @@ export const GetUserByEmail = async (req: Request, res: Response) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const AddMembersToGroup = async (req: Request, res: Response) => {
+  try {
+    const { chatId } = req.params;
+    const { newMembers } = req.body;
+
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatId,
+      { $addToSet: { members: { $each: newMembers } } }, // Avoids duplicates
+      { new: true }
+    ).populate('members');
+
+    if (!updatedChat) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    res.json(updatedChat);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};

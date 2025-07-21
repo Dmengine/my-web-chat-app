@@ -3,8 +3,10 @@ import {Message} from '../model/message.model';
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
-    const { sender, content, chat } = req.body;
-    const message = await Message.create({ sender, content, chat });
+    const { sender, content } = req.body;
+    const { chatId } = req.params;
+
+    const message = await Message.create({ sender, content, chat: chatId });
     res.status(201).json(message);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
