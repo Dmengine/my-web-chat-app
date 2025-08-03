@@ -14,6 +14,13 @@ const chatSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    admin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: function(this: any) {
+            return this.isGroup;
+        },
+    }
 }, { timestamps: true   })
 
 export const Chat = mongoose.model('Chat', chatSchema);

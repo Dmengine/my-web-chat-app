@@ -70,7 +70,7 @@ export const Login = async (req: Request, res: Response) => {
                 success: false
             })
         }
-        const token = jwt.sign({ id: existingUser._id}, process.env.JWT_SECRET as string, {
+        const token = jwt.sign({ _id: existingUser._id}, process.env.JWT_SECRET as string, {
             expiresIn: '8d'
         })
         res.status(200).send({
@@ -94,6 +94,10 @@ export const Logout = async (req: Request, res: Response) => {
         success: true
        }) 
     } catch (error) {
-        
-    }
+    console.error('Logout Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed. Something went wrong.',
+    });
+  }
 }

@@ -23,7 +23,9 @@ export const authMiddleware = async (
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    const decoded:any = jwt.verify(token, process.env.JWT_SECRET as string);
+    req.user = { _id: decoded._id || decoded.id };
+
 
     req.user = decoded;
     next();
