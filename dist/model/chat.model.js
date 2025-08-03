@@ -18,5 +18,12 @@ const chatSchema = new mongoose_1.default.Schema({
         type: Boolean,
         default: false
     },
+    admin: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'User',
+        required: function () {
+            return this.isGroup;
+        },
+    }
 }, { timestamps: true });
 exports.Chat = mongoose_1.default.model('Chat', chatSchema);

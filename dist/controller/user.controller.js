@@ -80,7 +80,7 @@ const Login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 success: false
             });
         }
-        const token = jsonwebtoken_1.default.sign({ id: existingUser._id }, process.env.JWT_SECRET, {
+        const token = jsonwebtoken_1.default.sign({ _id: existingUser._id }, process.env.JWT_SECRET, {
             expiresIn: '8d'
         });
         res.status(200).send({
@@ -106,6 +106,11 @@ const Logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
     }
     catch (error) {
+        console.error('Logout Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Logout failed. Something went wrong.',
+        });
     }
 });
 exports.Logout = Logout;

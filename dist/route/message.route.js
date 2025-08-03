@@ -8,4 +8,5 @@ const message_controller_1 = require("../controller/message.controller");
 const router = express_1.default.Router();
 router.post('/message/:chatId', message_controller_1.sendMessage);
 router.get('/message/:chatId', message_controller_1.getMessagesByChat);
+router.put('/message/:chatId/mark-seen', message_controller_1.markMessagesAsSeen);
 exports.default = router;

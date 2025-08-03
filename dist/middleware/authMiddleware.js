@@ -27,6 +27,7 @@ const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         }
         const token = authHeader.split(' ')[1];
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        req.user = { _id: decoded._id || decoded.id };
         req.user = decoded;
         next();
     }

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMessagesByChat = exports.sendMessage = void 0;
+exports.markMessagesAsSeen = exports.getMessagesByChat = exports.sendMessage = void 0;
 const message_model_1 = require("../model/message.model");
 const sendMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -26,13 +26,35 @@ exports.sendMessage = sendMessage;
 const getMessagesByChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const chatId = req.params.chatId;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
         const messages = yield message_model_1.Message.find({ chat: chatId })
             .populate('sender', 'username')
-            .sort({ createdAt: 1 });
-        res.json(messages);
+            .sort({ createdAt: 1 })
+            .skip(skip)
+            .limit(limit);
+        const total = yield message_model_1.Message.countDocuments({ chat: chatId });
+        res.json({
+            messages,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+        });
     }
     catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 exports.getMessagesByChat = getMessagesByChat;
+const markMessagesAsSeen = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const chatId = req.params.chatId;
+        const { userId } = req.body;
+        yield message_model_1.Message.updateMany({ chat: chatId, seenBy: { $ne: userId } }, { $addToSet: { seenBy: userId } });
+        res.status(200).json({ message: 'Messages marked as seen' });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+exports.markMessagesAsSeen = markMessagesAsSeen;

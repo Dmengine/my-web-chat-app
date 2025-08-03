@@ -9,28 +9,40 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AddMembersToGroup = exports.GetUserByEmail = exports.GetUserChats = exports.CreateChat = void 0;
+exports.GetChatDetails = exports.AddMembersToGroup = exports.GetUserByEmail = exports.GetUserChats = exports.CreateChat = void 0;
 const chat_model_1 = require("../model/chat.model");
 const user_model_1 = require("../model/user.model");
 const CreateChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    // console.log('Req.user in CreateChat:', req.user);
     try {
         const { name, members, isGroup } = req.body;
         const chat = yield chat_model_1.Chat.create({
             name,
             members,
-            isGroup
+            isGroup,
+            admin: isGroup ? (_a = req.user) === null || _a === void 0 ? void 0 : _a._id : undefined,
         });
-        res.status(201).json(chat);
+        // Populate members and admin fields for the response
+        const populatedChat = yield chat_model_1.Chat.findById(chat._id)
+            .populate('members', 'username email')
+            .populate('admin', '_id username email');
+        res.status(201).json(populatedChat);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 });
 exports.CreateChat = CreateChat;
 const GetUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // console.log('Hit GetUserChats route with userId:', req.params.userId);
     try {
         const userId = req.params.userId;
-        const chats = yield chat_model_1.Chat.find({ members: userId }).populate('members');
+        const chats = yield chat_model_1.Chat.find({ members: userId })
+            .populate('members', 'username email')
+            .populate('admin', '_id username email');
+        // console.log('User chats with admin populated:', chats);
         res.json(chats);
     }
     catch (err) {
@@ -52,11 +64,27 @@ const GetUserByEmail = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.GetUserByEmail = GetUserByEmail;
 const AddMembersToGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { chatId } = req.params;
         const { newMembers } = req.body;
+        const chat = yield chat_model_1.Chat.findById(chatId)
+            .populate('members', 'username email')
+            .populate('admin', '_id username email');
+        if (!chat || !chat.isGroup) {
+            return res.status(400).json({
+                message: 'Chat not found or is not a group chat'
+            });
+        }
+        if (((_a = chat.admin) === null || _a === void 0 ? void 0 : _a._id.toString()) !== ((_b = req.user) === null || _b === void 0 ? void 0 : _b._id)) {
+            return res.status(403).json({
+                message: 'Only the admin can add members to this group chat'
+            });
+        }
         const updatedChat = yield chat_model_1.Chat.findByIdAndUpdate(chatId, { $addToSet: { members: { $each: newMembers } } }, // Avoids duplicates
-        { new: true }).populate('members');
+        { new: true })
+            .populate('members', 'username email')
+            .populate('admin', '_id username email');
         if (!updatedChat) {
             return res.status(404).json({ message: 'Chat not found' });
         }
@@ -67,3 +95,20 @@ const AddMembersToGroup = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.AddMembersToGroup = AddMembersToGroup;
+const GetChatDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Hit GetChatDetails route with chatId:', req.params.chatId);
+    try {
+        const { chatId } = req.params;
+        const chat = yield chat_model_1.Chat.findById(chatId)
+            .populate('members', 'username email')
+            .populate('admin', '_id username email');
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+        res.json(chat);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+exports.GetChatDetails = GetChatDetails;
